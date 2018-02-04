@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>MQTT Performance</title>
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+        }
+        h1, h2 {
+            background-color: #8caae6;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"></script>
+</head>
+<body>
+<h1>MQTT Test Page</h1>
+<p>Testseite, um MQTT Nachrichten zu empfangen. Wenn RabbitMQ korrekt eingerichtet ist, sollte
+unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheinen.</p>
+
+<div id="messages" style="font-family: Consolas; background-color: lightgray;"></div>
+<script>
+    // happily copied from https://www.rabbitmq.com/web-mqtt.html
+    var messageCount = 0;
+    var lastMessageCount = 0;
+    var lastSeq = -1;
+    var interval = 5000;
+    function debug(msg) {
+        var p = document.createElement("P");
+        p.appendChild(document.createTextNode(msg));
+        messages = document.getElementById("messages");
+        if (messages.children.length == 0) {
+            messages.appendChild(p);
+        } else {
+            messages.insertBefore(p, messages.children[0]);
+        }
+    }
+    setInterval(function () {
+        var cnt = messageCount;
+        var throughput = (cnt - lastMessageCount) / (interval / 1000);
+        debug("Messages received total: " + cnt + "." + 
+              "Throughput: " + throughput+ "msg/s. " + 
+              "Last sequence: " + lastSeq + ".");
+        lastMessageCount = cnt;
+    }, interval);
+    var wsbroker = 'localhost';  // mqtt websocket enabled broker
+    var wsport = 15675; // port for above
+    var client = new Paho.MQTT.Client(wsbroker, wsport, "/ws",
+    "myclientid_" + parseInt(Math.random() * 100, 10));
+    client.onConnectionLost = function (responseObject) {
+        debug("CONNECTION LOST - " + responseObject.errorMessage);
+    };
+    client.onMessageArrived = function (message) {
+        json = JSON.parse(message.payloadString);
+        messageCount++;
+        lastSeq = json.seq;
+        // debug("RECEIVE ON " + message.destinationName + " PAYLOAD " + message.payloadString);
+    };
+    var options = {
+        timeout: 3,
+        onSuccess: function () {
+            debug("CONNECTION SUCCESS");
+            client.subscribe('perf');
+        },
+        onFailure: function (message) {
+            debug("CONNECTION FAILURE - " + message.errorMessage);
+        }
+    };
+    if (location.protocol == "https:") {
+        options.useSSL = true;
+    }
+    debug("CONNECT TO " + wsbroker + ":" + wsport);
+    client.connect(options);
+</script>
+</body>
+</html>
