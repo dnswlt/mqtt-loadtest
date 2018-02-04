@@ -11,7 +11,7 @@
             background-color: #8caae6;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
 </head>
 <body>
 <h1>MQTT Test Page</h1>
@@ -25,6 +25,7 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
     var lastMessageCount = 0;
     var lastSeq = -1;
     var interval = 5000;
+    var connected = false;
     function debug(msg) {
         var p = document.createElement("P");
         p.appendChild(document.createTextNode(msg));
@@ -35,14 +36,6 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
             messages.insertBefore(p, messages.children[0]);
         }
     }
-    setInterval(function () {
-        var cnt = messageCount;
-        var throughput = (cnt - lastMessageCount) / (interval / 1000);
-        debug("Messages received total: " + cnt + "." + 
-              "Throughput: " + throughput+ "msg/s. " + 
-              "Last sequence: " + lastSeq + ".");
-        lastMessageCount = cnt;
-    }, interval);
     var wsbroker = 'localhost';  // mqtt websocket enabled broker
     var wsport = 15675; // port for above
     var client = new Paho.MQTT.Client(wsbroker, wsport, "/ws",
@@ -58,8 +51,12 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
     };
     var options = {
         timeout: 3,
+        userName: "perf",
+        password: "ferp777",
+        // reconnect: true, // unavailable for JavaScript client :(
         onSuccess: function () {
             debug("CONNECTION SUCCESS");
+            connected = true;
             client.subscribe('perf');
         },
         onFailure: function (message) {
@@ -71,6 +68,20 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
     }
     debug("CONNECT TO " + wsbroker + ":" + wsport);
     client.connect(options);
+    setInterval(function () {
+        if (!connected) {
+            return;
+        }
+        client.send('heartbeat', 'alive')     
+    }, 1000);
+    setInterval(function () {
+        var cnt = messageCount;
+        var throughput = (cnt - lastMessageCount) / (interval / 1000);
+        debug("Messages received total: " + cnt + "." + 
+              "Throughput: " + throughput+ "msg/s. " + 
+              "Last sequence: " + lastSeq + ".");
+        lastMessageCount = cnt;
+    }, interval);
 </script>
 </body>
 </html>
