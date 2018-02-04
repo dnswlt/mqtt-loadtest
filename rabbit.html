@@ -36,7 +36,7 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
             messages.insertBefore(p, messages.children[0]);
         }
     }
-    var wsbroker = 'localhost';  // mqtt websocket enabled broker
+    var wsbroker = '192.168.99.11';  // mqtt websocket enabled broker
     var wsport = 15675; // port for above
     var client = new Paho.MQTT.Client(wsbroker, wsport, "/ws",
     "myclientid_" + parseInt(Math.random() * 100, 10));
@@ -75,6 +75,9 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
         client.send('heartbeat', 'alive')     
     }, 1000);
     setInterval(function () {
+        if (!connected) {
+            return;
+        }
         var cnt = messageCount;
         var throughput = (cnt - lastMessageCount) / (interval / 1000);
         debug("Messages received total: " + cnt + "." + 
