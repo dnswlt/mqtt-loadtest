@@ -57,7 +57,9 @@ unter diesem Text gleich "CONNECTION SUCCESS" (und ggf. weiterer Text) erscheine
         onSuccess: function () {
             debug("CONNECTION SUCCESS");
             connected = true;
-            client.subscribe('perf');
+            for (var i = 1; i <= 10; ++i) {
+                client.subscribe('perf-' + i);
+            }
         },
         onFailure: function (message) {
             debug("CONNECTION FAILURE - " + message.errorMessage);
