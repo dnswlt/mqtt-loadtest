@@ -16,7 +16,9 @@ public class App
 {
     public static void main( String[] args ) throws Exception {
         ConnectionFactory cf = new ConnectionFactory();
-        cf.setHost("localhost");
+        cf.setHost("192.168.99.11");
+        cf.setUsername("perf");
+        cf.setPassword("ferp777");
         Connection conn = cf.newConnection();
         Channel chan = conn.createChannel();
         chan.exchangeDeclare("mqtt", "topic");
